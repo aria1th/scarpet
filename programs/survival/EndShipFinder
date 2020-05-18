@@ -1,0 +1,99 @@
+//finds coordinates that have potential to have end ship. Due to end islands' non deterministic generation, some coordinates could be incorrect. 
+// Used spiral iteration, which could be different from iterating over square points. 
+// Spiral iteration could be easily replaced by grid point generation.
+
+vect_size(n) -> 
+(
+	return ((n+2-(n%2))/2)
+);
+
+gen_vect_list(mv, multify) -> 
+(
+	temp_a = 0;
+	vl = m();
+	order = 0;
+	while (temp_a< mv, mv, 
+		temp_a+= vect_size(order)*multify;
+		order+=1;
+		vl+=temp_a
+	);
+	return (vl)
+);
+
+vect_next(n) ->
+(
+	if ( !(n % 4), 
+		return (l(1,0)),
+		if( !((n-1)%4),
+			 return( l(0,1)),
+			if(!((n-2)%4),
+			 	return( l(-1,0)),
+				return (l(0,-1))
+			)
+		)
+	) 
+);
+
+end_ship(xyz) -> 
+(
+	nxyz = l();
+	for ( xyz, 
+		nxyz += abs(_)
+	);
+	l(a,b,c) = nxyz;
+	absxyz = m(a,b,c);
+	return (has(absxyz , 28)&&has( absxyz , 23)&&has( absxyz , 12))
+);
+
+// End ships have unique size of 29, 13, 24
+
+find_purpur(xz) -> 
+(
+	l(x,z) = xz;
+	return ((structure_eligibility(l(x,128, z),'end_city'))==1)
+);
+//simple function to find end city
+
+has_ship(xz) ->
+(
+	return (
+		if(find_purpur(xz),
+			l(x,z) = xz;
+			ship = 0;
+			ecpdata = get((structure_eligibility(l(x, 62, z), 'end_city', 256)),'pieces');
+			ecplocs = l();
+			first(ecpdata,
+				 if( 
+				end_ship( (get(_,2) - get(_,3) ) ),  ship = 1
+				)  
+			);
+		ship,0)
+	)
+);
+
+get_end_ship(distance, mult) ->
+(	vect_num = 0;
+	dir_num = 0;
+	listed = l();
+	checklist = l();
+	origin = l(0,0);
+	turningpoint = gen_vect_list(distance*distance*mult*mult, mult);
+	while (
+		1, (distance * distance), 
+		origin =origin + (vect_next(dir_num)*mult);
+		vect_num += 1;
+		if(has(turningpoint, vect_num), 
+			dir_num +=1
+		);
+		if(has_ship(origin),
+			listed += origin
+		);
+		checklist += origin;
+	);
+	return(listed)
+)
+
+//distance - N X N square points, mult = distances between points, 16 for chunk, example: get_end_ship(50,16) = nearby 2500 points, check for each chunk.
+// Since structure_eligibility uses chunk data, mult value less than 16 is not recommended.
+//caution, uses spiral iteration, which not makes different from square iteraion
+//You could solve Travelling Salesman Problem with concorde, to plan shortest path to collect maximum elytras. 
