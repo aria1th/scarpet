@@ -181,3 +181,39 @@ amidst_gold_farm(origin, dist, finds, checkrange) ->
 
 // Finds places just as 1.15 and before, where nether wastes only exists in checkrange. 
 // usage: script in coord_export invoke amidst_gold_farm l(0,0) 1000 1 7 = Find from origin (0,0), for 1000 distances, find one and stop, assert it is surrounded by 7 chunk distances
+
+amidst_fortress(origin, dist) ->
+(
+	Dict = m();
+	l(ox, oz) = origin;
+	for(rect(ox, 0, oz,dist, 0, dist),p = pos(_)*16;coord=l(get(p,0),get(p,-1));
+		se = structure_eligibility(p, 'fortress', 256);
+		if(se, put(Dict, __calc_distribution(__get_nebcr(se)), coord))
+	);
+	return(l(Dict:min(keys(Dict))))
+);
+
+__get_nebcr(selist)->
+(
+	listed = l();
+	if(!selist, return(false),
+		pieces = selist:'pieces';
+		for(pieces, if(get(_,0) == 'nebcr',newlist = l();newlist += get(_,2);newlist += get(_,3);listed += newlist)
+			);
+		return (listed))
+);
+
+__distance(p1, p2)->
+(
+	(reduce(p1 - p2, _a+_^2,0))^0.5
+);
+__calc_distribution(bcrlist)->
+(
+	if(length(bcrlist)<5, return(10000));
+	listed = l();
+	for(bcrlist, l(a,b) = _; listed += (a+b)/2);
+	i=l(0,0,0);for(listed,i=i+_);
+	midpoint= i / length(listed);
+	reduce(listed, _a+__distance(_, midpoint),0)/length(i)
+);
+//pieces: nebcr, crossroad, nesr, stairway, 
